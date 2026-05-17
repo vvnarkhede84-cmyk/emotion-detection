@@ -4,11 +4,20 @@ Emotion Detection Module
 This module provides functionality to detect emotions in text using the Watson
 NLP Emotion Detection API. It extracts emotion scores and determines the
 dominant emotion based on the highest score.
+
+Module Attributes:
+    WATSON_API_KEY (str): IBM Watson API authentication key loaded from .env
+    WATSON_URL (str): IBM Watson NLP service URL loaded from .env
 """
 
+import logging
 import os
 import requests
 from dotenv import load_dotenv
+
+# Configure logging for error reporting
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -78,12 +87,13 @@ def emotion_detector(text_to_analyze):
         # Make API request to Watson NLP service
         # Use apikey as username with basic authentication
         response = requests.post(
-            url, 
-            json=payload, 
-            headers=headers, 
+            url,
+            json=payload,
+            headers=headers,
             auth=('apikey', WATSON_API_KEY),
             timeout=10
         )
+
         # Check for 400 Bad Request
         if response.status_code == 400:
             return emotion_result
@@ -113,52 +123,17 @@ def emotion_detector(text_to_analyze):
                     'joy': emotion_result['joy'],
                     'sadness': emotion_result['sadness']
                 }
-                emotion_result['dominant_emotion'] = max(emotions, key=emotions.get)
+                emotion_result['dominant_emotion'] = max(
+                    emotions, key=emotions.get
+                )
 
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException as request_error:
         # Handle network errors or API unavailability
-        print(f"API Request Error: {e}")
+        logger.error("API Request Error: %s", request_error)
         return emotion_result
-    except (KeyError, ValueError) as e:
+    except (KeyError, ValueError) as parse_error:
         # Handle JSON parsing or key access errors
-        print(f"JSON Parsing Error: {e}")
+        logger.error("JSON Parsing Error: %s", parse_error)
         return emotion_result
 
     return emotion_result
-
-    # ============================================================
-    # DEMO MODE (COMMENTED OUT): Keyword-based emotion detection
-    # Uncomment below to use demo mode (useful for testing without API)
-    # ============================================================
-    # text_lower = text_to_analyze.lower()
-    # emotion_scores = {emotion: 0.0 for emotion in emotion_result.keys() if emotion != 'dominant_emotion'}
-    #
-    # # Demo keyword mappings
-    # EMOTION_KEYWORDS = {
-    #     'joy': ['happy', 'delighted', 'love', 'excellent', 'great', 'wonderful', 'thrilled', 'excited', 'amazing'],
-    #     'anger': ['angry', 'furious', 'outrageous', 'infuriating', 'terrible', 'hate', 'disgusted', 'mad'],
-    #     'sadness': ['sad', 'devastated', 'unhappy', 'miserable', 'depressed', 'sorrowful', 'grief', 'lonely'],
-    #     'fear': ['terrified', 'scared', 'afraid', 'fearful', 'frightened', 'anxious', 'nervous', 'panic'],
-    #     'disgust': ['disgusting', 'repulsive', 'gross', 'nasty', 'vile', 'horrible', 'revolting', 'abhorrent']
-    # }
-    #
-    # # Count keyword occurrences for each emotion
-    # for emotion, keywords in EMOTION_KEYWORDS.items():
-    #     for keyword in keywords:
-    #         emotion_scores[emotion] += text_lower.count(keyword) * 0.1
-    #
-    # # Normalize scores to be between 0 and 1
-    # max_score = max(emotion_scores.values()) if max(emotion_scores.values()) > 0 else 1
-    # if max_score > 1:
-    #     emotion_scores = {k: v / max_score for k, v in emotion_scores.items()}
-    #
-    # # Update result with calculated scores
-    # for emotion, score in emotion_scores.items():
-    #     emotion_result[emotion] = round(score, 2)
-    #
-    # # Determine dominant emotion
-    # if max(emotion_scores.values()) > 0:
-    #     emotion_result['dominant_emotion'] = max(emotion_scores, key=emotion_scores.get)
-    #
-    # return emotion_result
-

@@ -5,6 +5,9 @@ This module implements a Flask web server that exposes the emotion detection
 functionality through a REST API endpoint. It handles text input from clients,
 processes it using the emotion detector module, and returns formatted
 emotion analysis results.
+
+Module Attributes:
+    app (Flask): The Flask application instance serving the emotion detection API.
 """
 
 from flask import Flask, request
@@ -39,6 +42,7 @@ def detect_emotion():
 
     # Call the emotion detector function
     result = emotion_detector(text_to_analyze)
+
     # Check if dominant emotion is None (invalid input or API error)
     if result['dominant_emotion'] is None:
         return "Invalid text! Please try again!"
